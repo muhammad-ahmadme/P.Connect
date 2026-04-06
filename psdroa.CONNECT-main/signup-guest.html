@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guest Sign Up | PSDROA.connect</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body style="background: #000; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
+
+    <div class="card" style="width: 100%; max-width: 400px; padding: 40px; border: 1px solid #333; border-radius: 16px; background: #000;">
+        <div class="logo" style="text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: #fff;">
+            P.<span style="color: #1d9bf0;">guest</span>
+        </div>
+        
+        <h2 style="text-align: center; margin-bottom: 8px; font-size: 1.8rem;">Create Guest Account</h2>
+        <p style="text-align: center; color: #71767b; margin-bottom: 25px; font-size: 0.9rem;">Join the foreigner community feed.</p>
+
+        <div id="msgBox" style="display:none; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.85rem; text-align: center; line-height: 1.4;"></div>
+
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <input type="text" id="gUser" placeholder="Choose Username" style="padding: 12px; background: #16181c; border: 1px solid #333; color: white; border-radius: 4px; outline: none;">
+            <input type="email" id="gEmail" placeholder="Email Address" style="padding: 12px; background: #16181c; border: 1px solid #333; color: white; border-radius: 4px; outline: none;">
+            <input type="password" id="gPass" placeholder="Password" style="padding: 12px; background: #16181c; border: 1px solid #333; color: white; border-radius: 4px; outline: none;">
+            
+            <button onclick="handleGuestSignup()" id="gBtn" style="background: #1d9bf0; color: #fff; border: none; padding: 12px; border-radius: 25px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s;">
+                Sign Up as Guest
+            </button>
+        </div>
+
+        <p style="text-align: center; margin-top: 25px; font-size: 0.8rem; color: #71767b;">
+            Already have a guest account? <a href="login-guest.html" style="color: #1d9bf0; text-decoration: none;">Sign in here</a>
+        </p>
+    </div>
+
+    <script>
+        // --- FOREIGNER PROJECT B CONFIG ---
+        const G_URL = 'https://aelkiokxzzfnfvermrjy.supabase.co';
+        const G_KEY = 'sb_publishable_r8ncudJ8R49sXNlsE3OKvA_D4Ak_CHC';
+        const _db = supabase.createClient(G_URL, G_KEY);
+
+        async function handleGuestSignup() {
+            const user = document.getElementById('gUser').value.trim();
+            const email = document.getElementById('gEmail').value.trim();
+            const pass = document.getElementById('gPass').value;
+            const btn = document.getElementById('gBtn');
+
+            // 1. DEVICE CHECK (Strict 1 per device)
+            if (localStorage.getItem('guest_account_created') === 'true') {
+                showMsg("Access Denied: You have already created a guest account on this device.", "#ff4444");
+                return;
+            }
+
+            if(!user || !email || !pass) {
+                alert("Please fill all fields");
+                return;
+            }
+
+            btn.innerText = "Checking capacity...";
+            btn.disabled = true;
+
+            try {
+                // 2. GLOBAL HOURLY LIMIT CHECK (Max 3 total per hour)
+                const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+                
+                const { count, error: countErr } = await _db
+                    .from('guest_signup_logs')
+                    .select('*', { count: 'exact', head: true })
+                    .gt('created_at', oneHourAgo);
+
+                if (count >= 3) {
+                    showMsg("Hourly limit reached for new guests. Please wait 1 hour and try again.", "#ff4444");
+                    btn.innerText = "Sign Up as Guest";
+                    btn.disabled = false;
+                    return;
+                }
+
+                // 3. ATTEMPT SIGN UP
+                btn.innerText = "Creating account...";
+                const { data, error: signUpErr } = await _db.auth.signUp({
+                    email, 
+                    password: pass,
+                    options: { data: { username: user } }
+                });
+
+                if (signUpErr) throw signUpErr;
+
+                // 4. LOG SUCCESS TO DATABASE AND BROWSER
+                await _db.from('guest_signup_logs').insert([{}]);
+                localStorage.setItem('guest_account_created', 'true');
+
+                showMsg("Success! Please check your email to verify your account.", "#1d9bf0");
+                
+                setTimeout(() => { 
+                    window.location.href = 'login-guest.html'; 
+                }, 4000);
+
+            } catch (err) {
+                showMsg(err.message, "#ff4444");
+                btn.innerText = "Sign Up as Guest";
+                btn.disabled = false;
+            }
+        }
+
+        function showMsg(text, color) {
+            const msg = document.getElementById('msgBox');
+            msg.innerText = text;
+            msg.style.background = color + "1A"; // Subtle background color
+            msg.style.border = `1px solid ${color}33`;
+            msg.style.color = color;
+            msg.style.display = "block";
+        }
+    </script>
+</body>
+</html>

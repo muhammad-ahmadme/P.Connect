@@ -1,0 +1,9 @@
+{
+  "name": "psdroa-connect",
+  "version": "1.0.0",
+  "description": "Student private network",
+  "main": "index.html",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}

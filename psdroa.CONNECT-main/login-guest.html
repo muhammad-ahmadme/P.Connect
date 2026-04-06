@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guest Login | PSDROA.connect</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body style="background: #000; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
+
+    <div class="card" style="width: 100%; max-width: 400px; padding: 40px; border: 1px solid #333; border-radius: 16px; background: #000;">
+        <div class="logo" style="text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: #fff;">
+            P.<span style="color: #1d9bf0;">guest</span>
+        </div>
+        
+        <h2 style="text-align: center; margin-bottom: 25px; font-size: 1.8rem;">Guest Sign In</h2>
+
+        <div id="loginError" style="display:none; color: #ff4444; background: rgba(255,68,68,0.1); padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; text-align: center;"></div>
+
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <input type="email" id="loginEmail" placeholder="Email" style="padding: 12px; background: #16181c; border: 1px solid #333; color: white; border-radius: 4px; outline: none;">
+            <input type="password" id="loginPass" placeholder="Password" style="padding: 12px; background: #16181c; border: 1px solid #333; color: white; border-radius: 4px; outline: none;">
+            
+            <button onclick="handleGuestLogin()" id="loginBtn" style="background: #fff; color: #000; border: none; padding: 12px; border-radius: 25px; font-weight: bold; cursor: pointer; margin-top: 10px;">
+                Sign In
+            </button>
+        </div>
+
+        <p style="text-align: center; margin-top: 25px; font-size: 0.8rem; color: #71767b;">
+            Don't have a guest account? <a href="signup-guest.html" style="color: #1d9bf0; text-decoration: none;">Register here</a>
+        </p>
+        
+        <p style="text-align: center; margin-top: 10px; font-size: 0.8rem;">
+            <a href="login.html" style="color: #71767b; text-decoration: none;">Student Sign In</a>
+        </p>
+    </div>
+
+    <script>
+        // --- FOREIGNER PROJECT CONFIG (Project B) ---
+        const G_URL = 'https://aelkiokxzzfnfvermrjy.supabase.co';
+        const G_KEY = 'sb_publishable_r8ncudJ8R49sXNlsE3OKvA_D4Ak_CHC';
+        const _db = supabase.createClient(G_URL, G_KEY);
+
+        async function handleGuestLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const pass = document.getElementById('loginPass').value;
+            const errBox = document.getElementById('loginError');
+            const btn = document.getElementById('loginBtn');
+
+            errBox.style.display = 'none';
+            if(!email || !pass) {
+                errBox.innerText = "Please enter email and password.";
+                errBox.style.display = 'block';
+                return;
+            }
+
+            btn.innerText = "Authenticating...";
+            btn.disabled = true;
+
+            const { data, error } = await _db.auth.signInWithPassword({
+                email: email,
+                password: pass
+            });
+
+            if (error) {
+                errBox.innerText = error.message;
+                errBox.style.display = 'block';
+                btn.innerText = "Sign In";
+                btn.disabled = false;
+            } else {
+                // Success! Redirect to the Foreigner Feed
+                window.location.href = 'guest-feed.html';
+            }
+        }
+    </script>
+</body>
+</html>
