@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Join the World | PSDROA.connect</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .hero { flex: 1; background: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000&auto=format&fit=crop') center/cover; position: relative; }
+        .hero::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.6); }
+        .hero-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2; font-size: 4rem; font-weight: 900; width: 80%; text-align: center; }
+        .auth-side { width: 450px; background: #000; padding: 40px; display: flex; flex-direction: column; justify-content: center; border-left: 1px solid #2f3336; }
+        .input { width: 100%; padding: 16px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; margin-bottom: 15px; font-size: 1rem; box-sizing: border-box; transition: 0.2s; }
+        .input:focus { border-color: #1d9bf0; outline: none; }
+        .btn { background: #1d9bf0; color: white; border: none; padding: 16px; width: 100%; border-radius: 99px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+        .btn:hover { background: #1a8cd8; }
+        @media (max-width: 900px) { .hero { display: none; } .auth-side { width: 100%; border: none; } }
+    </style>
+</head>
+<body>
+    <div class="hero"><div class="hero-text">Connect with<br>the world.</div></div>
+    <div class="auth-side">
+        <h1 style="font-size: 3rem; margin-bottom: 10px;">P.</h1>
+        <h2 id="title" style="margin-bottom: 30px; font-size: 2rem;">Happening now</h2>
+        <div id="signup-fields" style="display:none"><input type="text" id="username" placeholder="Choose a username" class="input"></div>
+        <input type="email" id="email" placeholder="Email address" class="input">
+        <input type="password" id="password" placeholder="Password" class="input">
+        <div id="err" style="color:#f4212e; margin-bottom:15px; display:none; font-size: 0.9rem;"></div>
+        <button class="btn" onclick="Auth.handle()">Sign In</button>
+        <p style="color:#71767b; margin-top:25px; cursor:pointer; text-align: center;" onclick="Auth.toggle()">Don't have an account? <b>Sign up</b></p>
+    </div>
+    <script>
+        const _URL = 'https://aelkiokxzzfnfvermrjy.supabase.co';
+        const _KEY = 'sb_publishable_r8ncudJ8R49sXNlsE3OKvA_D4Ak_CHC';
+        const _db = supabase.createClient(_URL, _KEY);
+        window.onload = () => { sessionStorage.clear(); localStorage.clear(); };
+
+        const Auth = {
+            isLogin: true,
+            toggle() { 
+                this.isLogin = !this.isLogin; 
+                document.getElementById('title').innerText = this.isLogin ? 'Happening now' : 'Join today.'; 
+                document.getElementById('signup-fields').style.display = this.isLogin ? 'none' : 'block'; 
+                document.querySelector('.btn').innerText = this.isLogin ? 'Sign In' : 'Create Account';
+            },
+            async handle() {
+                const e = document.getElementById('email').value, p = document.getElementById('password').value, u = document.getElementById('username').value;
+                try {
+                    if(this.isLogin) { await _db.auth.signInWithPassword({ email: e, password: p }); } 
+                    else {
+                        const { data, error } = await _db.auth.signUp({ email: e, password: p });
+                        if(error) throw error;
+                        await _db.from('profiles').insert([{ id: data.user.id, username: u }]);
+                    }
+                    window.location.replace('index.html');
+                } catch (err) { document.getElementById('err').innerText = err.message; document.getElementById('err').style.display = 'block'; }
+            }
+        };
+    </script>
+</body>
+</html>

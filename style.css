@@ -1,0 +1,13 @@
+:root {
+    --bg-black: #000000;
+    --border-gray: #2f3336;
+    --connect-blue: #1d9bf0;
+    --text-main: #e7e9ea;
+    --text-dim: #71767b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #000; color: #fff; font-family: sans-serif; }
+.auth-wrapper { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+.auth-box { width: 100%; max-width: 400px; padding: 20px; text-align: center; }
+.auth-input { width: 100%; padding: 15px; background: #000; border: 1px solid #333; color: #fff; margin-bottom: 10px; border-radius: 5px; }
+.main-btn { width: 100%; padding: 12px; border-radius: 99px; border: none; font-weight: bold; cursor: pointer; background: #1d9bf0; color: #fff; }
