@@ -1,33 +1,24 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const supabaseUrl = 'https://aelkiokxzzfnfvermrjy.supabase.co';
+const supabaseKey = 'sb_publishable_r8ncudJ8R49sXNlsE3OKvA_D4Ak_CHC';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-export default async function handler(req, res) {
-    // 1. Only allow POST requests
-    if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-    const token = req.headers.authorization?.split(' ')[1];
-    const { content } = req.body;
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
 
-    try {
-        // 2. SECURITY: Verify the Student/User
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-        if (authError || !user) return res.status(401).json({ error: "Unauthorized" });
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) return res.status(401).json({ error: 'Invalid token' });
 
-        // 3. STORAGE PROTECTION: Length & Sanitization
-        if (!content || content.length > 500) {
-            return res.status(400).json({ error: "Post invalid or too long" });
-        }
+  const { content } = req.body;
+  const { data, error } = await supabase
+    .from('world_posts')
+    .insert([{ user_id: user.id, content }])
+    .select();
 
-        // 4. EXECUTION
-        const { error } = await supabase.from('world_posts').insert([
-            { user_id: user.id, content: content.replace(/</g, "&lt;") }
-        ]);
-
-        if (error) throw error;
-        return res.status(200).json({ success: true });
-
-    } catch (err) {
-        return res.status(500).json({ error: err.message });
-    }
-}
+  if (error) return res.status(500).json({ error: error.message });
+  return res.status(200).json(data);
+};
