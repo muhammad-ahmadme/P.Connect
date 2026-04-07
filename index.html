@@ -147,6 +147,9 @@
         const _KEY = 'sb_publishable_r8ncudJ8R49sXNlsE3OKvA_D4Ak_CHC';
         const _db = supabase.createClient(_URL, _KEY);
         
+        // Connect Backend URL 
+        const BACKEND_URL = 'http://localhost:3000';
+
         let me = null, profile = null, feedMode = 'global', likesSet = new Set(), activePeer = null;
 
         const App = {
@@ -192,7 +195,7 @@
                 if(id==='profile') navItems[3].classList.add('active');
 
                 if(id === 'profile') Feed.loadMyPosts();
-                if(id === 'messages') DMs.closeChat(); // Reset DM view to list on enter
+                if(id === 'messages') DMs.closeChat(); 
             },
             async search(q) {
                 if(!q) return document.getElementById('search-results').innerHTML = '';
@@ -208,10 +211,27 @@
                 `).join('');
             },
             async follow(targetId) { await _db.from('follows').insert([{ follower_id: me.id, following_id: targetId }]); alert('Followed!'); },
+            
+            // SECURED: Bio Update
             async updateBio() {
                 const txt = document.getElementById('edit-bio').value;
-                await _db.from('profiles').update({ bio: txt }).eq('id', me.id);
-                document.getElementById('prof-bio').innerText = txt;
+                const { data: { session } } = await _db.auth.getSession();
+
+                const res = await fetch(`${BACKEND_URL}/api/profile/bio`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({ bio: txt })
+                });
+
+                if (res.ok) {
+                    document.getElementById('prof-bio').innerText = txt;
+                } else {
+                    const errorData = await res.json();
+                    alert("Failed to update bio: " + errorData.error);
+                }
             },
             async logout() { await _db.auth.signOut(); sessionStorage.clear(); localStorage.clear(); window.location.replace('auth.html'); }
         };
@@ -223,11 +243,29 @@
                 document.getElementById('tab-follow').classList.toggle('active', mode === 'following');
                 this.load();
             },
+            
+            // SECURED: Post Creation
             async post() {
                 const val = document.getElementById('postIn').value;
                 if(!val) return;
-                await _db.from('world_posts').insert([{ user_id: me.id, content: val }]);
-                document.getElementById('postIn').value = "";
+                
+                const { data: { session } } = await _db.auth.getSession();
+
+                const res = await fetch(`${BACKEND_URL}/api/posts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({ content: val })
+                });
+
+                if (res.ok) {
+                    document.getElementById('postIn').value = "";
+                } else {
+                    const errorData = await res.json();
+                    alert("Action blocked: " + errorData.error);
+                }
             },
             async load() {
                 let query = _db.from('world_posts').select(`id, content, created_at, user_id, profiles!inner(username)`).order('created_at', { ascending: false });
@@ -276,7 +314,6 @@
 
         const DMs = {
             async loadContacts() {
-                // Simplified: Just loads everyone for now. In prod, filter by existing conversations.
                 const { data } = await _db.from('profiles').select('*').neq('id', me.id).limit(20);
                 this.renderContacts(data);
             },
@@ -312,12 +349,24 @@
                 stream.innerHTML = data.map(m => `<div class="msg-bubble ${m.sender_id === me.id ? 'msg-sent' : 'msg-recv'}">${m.content}</div>`).join('');
                 stream.scrollTop = stream.scrollHeight;
             },
+            
+            // SECURED: Message Sending
             async send() {
                 const input = document.getElementById('chatIn');
                 if(!input.value || !activePeer) return;
-                await _db.from('messages').insert([{ sender_id: me.id, receiver_id: activePeer, content: input.value }]);
+                
+                const { data: { session } } = await _db.auth.getSession();
+
+                await fetch(`${BACKEND_URL}/api/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({ receiver_id: activePeer, content: input.value })
+                });
+
                 input.value = '';
-                // No need to call loadChat() here because the Realtime listener triggers it automatically
             }
         };
 
