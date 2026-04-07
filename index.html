@@ -127,7 +127,7 @@
                 document.getElementById('my-avatar').innerText = p.username[0];
                 document.getElementById('prof-av').innerText = p.username[0];
                 document.getElementById('prof-name').innerText = `@${p.username}`;
-                document.getElementById('prof-bio').innerText = p.bio || "Student at PSDROA";
+                document.getElementById('prof-bio').innerText = p.bio || "No Bio";
                 document.getElementById('edit-bio').value = p.bio || "";
 
                 const { data: lks } = await _db.from('likes').select('post_id').eq('user_id', me.id);
