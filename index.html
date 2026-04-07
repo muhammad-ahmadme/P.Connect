@@ -73,7 +73,7 @@
 
             <div id="v-explore" class="v" style="display:none; padding: 15px;">
                 <h2 style="margin-bottom: 15px;">Explore</h2>
-                <input type="text" placeholder="Search students..." class="search-bar" style="width:100%; padding:15px; background:#202327; border:none; border-radius:99px; color:#fff; outline:none;" oninput="App.search(this.value)">
+                <input type="text" placeholder="Search users..." class="search-bar" style="width:100%; padding:15px; background:#202327; border:none; border-radius:99px; color:#fff; outline:none;" oninput="App.search(this.value)">
                 <div id="search-results" style="margin-top:20px;"></div>
             </div>
 
@@ -111,8 +111,6 @@
         const _URL = 'https://aelkiokxzzfnfvermrjy.supabase.co';
         const _KEY = 'sb_publishable_r8ncudJ8R49sXNlsE3OKvA_D4Ak_CHC';
         const _db = supabase.createClient(_URL, _KEY);
-        
-        // BACKEND_URL is empty because Vercel hosts /api on the same domain
         const BACKEND_URL = ''; 
 
         let me = null, likesSet = new Set(), activePeer = null;
@@ -127,6 +125,7 @@
                 document.getElementById('my-avatar').innerText = p.username[0];
                 document.getElementById('prof-av').innerText = p.username[0];
                 document.getElementById('prof-name').innerText = `@${p.username}`;
+                // Removed default student text here
                 document.getElementById('prof-bio').innerText = p.bio || "No Bio";
                 document.getElementById('edit-bio').value = p.bio || "";
 
